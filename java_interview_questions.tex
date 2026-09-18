@@ -1,0 +1,228 @@
+\documentclass[12pt,a4paper]{article}
+
+% Encoding and language
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+% Page layout
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath,amssymb}
+
+% Better code formatting
+\usepackage{listings}
+
+\title{Java and Spring Boot Interview Notes}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Java Interview Questions}
+
+\subsection{What is the Difference Between \texttt{==} and \texttt{equals()}?}
+
+In Java, \texttt{==} compares primitive values directly. For objects, it
+checks whether two references point to the same object. The
+\texttt{equals()} method is used for logical equality and can be overridden
+by a class to compare object contents. The default implementation of
+\texttt{equals()} in the \texttt{Object} class performs reference
+comparison.
+
+\subsubsection*{Key Point}
+
+\begin{itemize}
+    \item For primitives, \texttt{==} compares values.
+    \item For objects, \texttt{==} compares references.
+    \item \texttt{equals()} is used for logical or content equality.
+\end{itemize}
+
+\subsection{What Does the \texttt{final} Keyword Mean for Variables, Methods, and Classes?}
+
+In Java, the \texttt{final} keyword prevents further modification depending
+on where it is used. A final variable cannot be reassigned, a final method
+cannot be overridden and a final class cannot be extended. For object
+references, \texttt{final} prevents reassignment of the reference, but it
+does not make the object itself immutable.
+
+\subsection{What is the \texttt{@Qualifier} Annotation in Spring?}
+
+The \texttt{@Qualifier} annotation is used when multiple beans of the same
+type exist in the Spring ApplicationContext and Spring cannot determine
+which one should be injected.
+
+\subsubsection*{\texttt{@Qualifier} vs \texttt{@Primary}}
+
+\texttt{@Primary} defines the default bean when multiple beans of the same
+type exist.
+
+\texttt{@Qualifier} explicitly selects a specific bean.
+
+\begin{verbatim}
+@Primary   -> preferred/default bean
+@Qualifier -> explicitly selected bean
+\end{verbatim}
+
+\subsubsection*{Important Note}
+
+Using \texttt{@Qualifier} binds that dependency to a specific implementation.
+
+Therefore, it is suitable when the implementation is known when the
+application is configured.
+
+If the implementation must be selected dynamically at runtime, for example
+based on a user's payment method, a Strategy or Factory-based design is
+usually more appropriate.
+
+\subsubsection*{Interview Answer}
+
+The \texttt{@Qualifier} annotation is used when multiple beans of the same
+type exist in the Spring context. It tells Spring exactly which bean should
+be injected and resolves ambiguity during dependency injection.
+
+It is mainly used for static dependency selection. If the implementation
+must be chosen dynamically at runtime, a Strategy or Factory approach can
+be used instead.
+
+\subsection{Can a Static Method Be Overridden in Java?}
+
+No. Static methods cannot be overridden in Java.
+
+If a subclass defines a static method with the same signature as a static
+method in its superclass, this is called \textit{method hiding}, not method
+overriding.
+
+\subsubsection*{Method Overriding vs Method Hiding}
+
+\begin{verbatim}
+Instance method:
+-> Can be overridden
+-> Runtime polymorphism
+-> Actual object type determines the method
+
+Static method:
+-> Cannot be overridden
+-> Can be hidden
+-> Reference/class type determines the method
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+Static methods cannot be overridden in Java because they belong to the
+class rather than an instance. If a subclass defines a static method with
+the same signature, it hides the superclass method. This is called method
+hiding. Static method calls are resolved based on the reference or class
+type rather than the actual object type.
+
+\subsection{Which Memory Area is Cleaned by the Garbage Collector: Heap or Stack?}
+
+The Java Garbage Collector primarily manages \textbf{heap memory}.
+
+Objects created with \texttt{new} are generally allocated on the heap.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+Person person = new Person("Utku");
+\end{lstlisting}
+
+The local reference \texttt{person} may exist in the current stack frame,
+while the actual \texttt{Person} object is stored on the heap.
+
+If the object becomes unreachable, it becomes eligible for garbage
+collection.
+
+\begin{lstlisting}[language=Java]
+Person person = new Person("Utku");
+
+person = null;
+\end{lstlisting}
+
+After the reference is removed, if no other reachable reference points to
+the object, the object may be reclaimed by the Garbage Collector.
+
+Being eligible for garbage collection does not mean that the object is
+immediately removed. The JVM decides when garbage collection should run.
+
+\subsubsection*{What Happens to Stack Memory?}
+
+Stack memory is managed automatically using stack frames.
+
+Each method call creates a stack frame that contains information such as
+local variables and references.
+
+\begin{lstlisting}[language=Java]
+void calculate() {
+    int x = 10;
+    int y = 20;
+}
+\end{lstlisting}
+
+When the method finishes, its stack frame is automatically removed.
+Therefore, the Garbage Collector does not normally clean stack memory.
+
+\begin{verbatim}
+Heap:
+-> Stores objects
+-> Managed mainly by the Garbage Collector
+-> Unreachable objects may be reclaimed
+
+Stack:
+-> Stores method frames and local variables
+-> Automatically managed
+-> Frames are removed when methods return
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+The Java Garbage Collector mainly manages heap memory. Objects are allocated
+on the heap and when they are no longer reachable, they become eligible for
+garbage collection. Stack memory is managed automatically through stack
+frames, which are removed when methods return.
+
+\subsection{Why is \texttt{String} Immutable in Java?}
+
+A \texttt{String} object cannot be modified after it has been created.
+Operations that appear to modify a String actually create a new String
+object.
+
+\subsubsection*{Interview Answer}
+
+String is immutable in Java mainly for security, safe String Pool sharing,
+thread safety, and reliable hashing. Since a String cannot change after
+creation, it can safely be shared between threads, reused from the String
+Pool, and used as a stable key in hash-based collections such as HashMap.
+
+\subsection{What is the Difference Between \texttt{HashSet} and \texttt{TreeSet}?}
+
+Both \texttt{HashSet} and \texttt{TreeSet} implement the \texttt{Set}
+interface, meaning that they do not allow duplicate elements.
+
+\begin{verbatim}
+HashSet:
+-> Unique elements
+-> No guaranteed ordering
+-> Hash-based
+-> Uses hashCode() and equals()
+-> Average O(1) operations
+
+TreeSet:
+-> Unique elements
+-> Sorted elements
+-> Tree-based
+-> Uses Comparable or Comparator
+-> O(log n) operations
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+Both HashSet and TreeSet store unique elements. HashSet uses hashing and
+does not guarantee ordering, while TreeSet keeps elements sorted using a
+tree structure. HashSet provides average O(1) operations, whereas TreeSet
+provides O(log n) operations. HashSet relies mainly on hashCode() and
+equals(), while TreeSet relies on Comparable or Comparator.
+\end{document}
