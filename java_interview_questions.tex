@@ -225,4 +225,151 @@ does not guarantee ordering, while TreeSet keeps elements sorted using a
 tree structure. HashSet provides average O(1) operations, whereas TreeSet
 provides O(log n) operations. HashSet relies mainly on hashCode() and
 equals(), while TreeSet relies on Comparable or Comparator.
+
+\subsection{What is the Difference Between \texttt{HashMap} and \texttt{HashSet}?}
+
+\texttt{HashMap} stores data as key-value pairs, while \texttt{HashSet}
+stores only unique elements.
+
+\subsubsection*{Interview Answer}
+
+HashMap stores key-value pairs, while HashSet stores only unique elements.
+HashMap does not allow duplicate keys, although duplicate values are
+allowed. HashSet does not allow duplicate elements. Internally, HashSet is
+backed by a HashMap, where the set elements are stored as map keys with a
+dummy value.
+
+\subsection{What is a Bean?}
+
+A bean is simply an object whose lifecycle is managed by Spring.
+
+Spring may create beans automatically by discovering classes annotated
+with annotations such as:
+
+\begin{verbatim}
+@Component
+@Service
+@Repository
+@Controller
+@RestController
+\end{verbatim}
+
+Beans can also be explicitly declared using the \texttt{@Bean}
+annotation.
+
+\subsection{What is the ApplicationContext?}
+
+The \texttt{ApplicationContext} is the central Spring IoC container.
+
+It is responsible for creating, storing, configuring, and connecting
+Spring-managed objects, which are called \textbf{beans}.
+
+\texttt{ApplicationContext} can be thought of as the
+container in which Spring-managed objects live.
+
+\subsection{What Does \texttt{@SpringBootApplication} Do Internally?}
+
+\texttt{@SpringBootApplication} is a convenience annotation that combines:
+
+\begin{verbatim}
+@SpringBootConfiguration
+@EnableAutoConfiguration
+@ComponentScan
+\end{verbatim}
+
+\texttt{@SpringBootConfiguration} is based on
+\texttt{@Configuration} and allows Spring configuration and bean
+definitions.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public PaymentClient paymentClient() {
+        return new PaymentClient();
+    }
+}
+\end{lstlisting}
+
+The object returned by a \texttt{@Bean} method is registered in the
+Spring \texttt{ApplicationContext}.
+
+\texttt{@ComponentScan} searches the application's package and its
+subpackages for classes such as:
+
+\begin{verbatim}
+@Component
+@Service
+@Repository
+@Controller
+@RestController
+\end{verbatim}
+
+and registers them as Spring beans.
+
+\texttt{@EnableAutoConfiguration} automatically configures the application
+based on the libraries available on the classpath, application properties
+and existing beans.
+
+For example, if \texttt{spring-boot-starter-web} is present, Spring Boot
+automatically configures much of the Spring MVC infrastructure.
+
+Finally:
+
+\begin{lstlisting}[language=Java]
+SpringApplication.run(DemoApplication.class, args);
+\end{lstlisting}
+
+starts the application and initializes the Spring
+\texttt{ApplicationContext}.
+
+\subsubsection*{Interview Answer}
+
+\texttt{@SpringBootApplication} combines configuration, component scanning
+and auto-configuration. It allows Spring to discover and create beans,
+configure the application automatically and manage those beans inside the
+\texttt{ApplicationContext}. The \texttt{ApplicationContext} is the IoC
+container responsible for managing beans and injecting their dependencies.
+
+\subsection{What is \texttt{@Autowired} in Spring?}
+
+\texttt{@Autowired} is used for dependency injection. It tells Spring to
+find a matching bean from the \texttt{ApplicationContext} and inject it.
+
+\begin{lstlisting}[language=Java]
+@Service
+public class OrderService {
+
+    private final PaymentService paymentService;
+
+    public OrderService(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+}
+\end{lstlisting}
+
+Since Spring 4.3, if a class has only one constructor,
+\texttt{@Autowired} is not required because Spring automatically uses that
+constructor for dependency injection.
+
+If a class has multiple constructors, \texttt{@Autowired} can be used to
+indicate which constructor Spring should use.
+
+\texttt{final} is commonly used with constructor injection because the
+dependency is assigned once during object creation and cannot later be
+reassigned to another object.
+
+\texttt{@Autowired} can also be used for setter and field injection, but
+constructor injection is generally preferred.
+
+\subsubsection*{Interview Answer}
+
+\texttt{@Autowired} tells Spring to inject a matching bean from the
+\texttt{ApplicationContext}. With a single constructor, it is usually not
+needed. With multiple constructors, it can specify which constructor should
+be used for injection. Constructor-injected dependencies are often declared
+\texttt{final} so their references cannot be reassigned.
 \end{document}
