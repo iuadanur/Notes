@@ -372,4 +372,1394 @@ constructor injection is generally preferred.
 needed. With multiple constructors, it can specify which constructor should
 be used for injection. Constructor-injected dependencies are often declared
 \texttt{final} so their references cannot be reassigned.
+
+\subsection{What is a Singleton?}
+
+A singleton is a design pattern that ensures only one instance of a class
+exists and provides a shared access point to that instance.
+
+In Spring, the default bean scope is \texttt{singleton}. This means Spring
+creates one bean instance per \texttt{ApplicationContext} and reuses that
+same instance whenever the bean is injected.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+@Service
+public class OrderService {
+}
+\end{lstlisting}
+
+If \texttt{OrderService} is injected into multiple classes, Spring normally
+provides the same bean instance.
+
+\begin{verbatim}
+ApplicationContext
+        |
+        +-- one OrderService instance
+              |
+              +-- used by Controller A
+              +-- used by Service B
+\end{verbatim}
+
+A Spring singleton is not automatically thread-safe. If the bean contains
+mutable shared state, multiple threads may access and modify the same data.
+
+\subsubsection*{Interview Answer}
+
+A singleton means that only one instance of an object is used within a
+given context. In Spring, singleton is the default bean scope, so one bean
+instance is created per ApplicationContext and shared wherever that bean is
+injected. However, singleton does not automatically mean thread-safe.
+
+\subsection{Are Singleton Beans Thread-Safe in Spring?}
+
+No. A singleton bean is not automatically thread-safe.
+
+By default, Spring creates one bean instance per
+\texttt{ApplicationContext}. Multiple threads may use the same bean
+instance at the same time.
+
+A stateless singleton bean is generally safe:
+
+\begin{lstlisting}[language=Java]
+@Service
+public class OrderService {
+
+    public int calculateTotal(int price, int quantity) {
+        return price * quantity;
+    }
+}
+\end{lstlisting}
+
+However, mutable shared state may cause race conditions:
+
+\begin{lstlisting}[language=Java]
+@Service
+public class CounterService {
+
+    private int counter = 0;
+
+    public int increment() {
+        return ++counter;
+    }
+}
+\end{lstlisting}
+
+Multiple threads can modify \texttt{counter} concurrently.
+
+\subsubsection*{Interview Answer}
+
+Spring singleton beans are not automatically thread-safe. A singleton means
+that one bean instance is shared within the ApplicationContext. Stateless
+beans are generally safe, but mutable shared state can cause race
+conditions and must be handled carefully.
+
+\subsection{What is the Difference Between Abstraction and Encapsulation?}
+
+\subsubsection*{Interview Answer}
+
+Abstraction hides implementation details and focuses on what an object does.
+Encapsulation protects an object's internal state by controlling access to
+its data. Abstraction is about hiding complexity, while encapsulation is
+about restricting direct access to data.
+
+\subsection{What is the Single Responsibility Principle?}
+
+\subsubsection*{Interview Answer}
+
+The Single Responsibility Principle states that a class should have one
+main responsibility and only one reason to change. Unrelated responsibilities
+should be separated into different classes.
+
+\subsection{What is the Open/Closed Principle?}
+
+\subsubsection*{Interview Answer}
+
+The Open/Closed Principle states that software components should be open
+for extension but closed for modification. New behavior should preferably
+be added through new implementations instead of repeatedly changing
+existing code.
+
+\subsection{What is the Liskov Substitution Principle?}
+
+The Liskov Substitution Principle states that a subclass should be usable
+wherever its parent class is expected without breaking the expected behavior.
+
+\begin{lstlisting}[language=Java]
+class Vehicle {
+    public void startEngine() {
+        System.out.println("Engine started");
+    }
+}
+
+class Bicycle extends Vehicle {
+
+    @Override
+    public void startEngine() {
+        throw new UnsupportedOperationException();
+    }
+}
+\end{lstlisting}
+
+A \texttt{Bicycle} cannot safely replace a \texttt{Vehicle} because it
+cannot provide the expected \texttt{startEngine()} behavior.
+
+\subsubsection*{Interview Answer}
+
+A subclass should be replaceable with its parent type without breaking the
+expected behavior of the program.
+
+\subsection{What is the Interface Segregation Principle?}
+
+The Interface Segregation Principle states that a class should not be forced
+to implement methods it does not need.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+interface Worker {
+    void work();
+    void eat();
+}
+
+class Robot implements Worker {
+
+    public void work() {
+        System.out.println("Working");
+    }
+
+    public void eat() {
+        // Robot does not need this method
+    }
+}
+\end{lstlisting}
+
+A better design uses smaller and more focused interfaces:
+
+\begin{lstlisting}[language=Java]
+interface Workable {
+    void work();
+}
+
+interface Eatable {
+    void eat();
+}
+
+class Robot implements Workable {
+    public void work() {
+    }
+}
+
+class Human implements Workable, Eatable {
+    public void work() {
+    }
+
+    public void eat() {
+    }
+}
+\end{lstlisting}
+
+\subsubsection*{Interview Answer}
+
+The Interface Segregation Principle states that classes should not be forced
+to depend on methods they do not use. Small and focused interfaces are
+preferred over large general-purpose interfaces.
+
+\subsection{What is the Dependency Inversion Principle?}
+
+The Dependency Inversion Principle states that high-level classes should
+depend on abstractions rather than concrete implementations.
+
+For example, this creates tight coupling:
+
+\begin{lstlisting}[language=Java]
+class OrderService {
+
+    private CreditCardPaymentService paymentService =
+            new CreditCardPaymentService();
+
+    public void checkout() {
+        paymentService.pay();
+    }
+}
+\end{lstlisting}
+
+A better design depends on an abstraction:
+
+\begin{lstlisting}[language=Java]
+interface PaymentService {
+    void pay();
+}
+
+class CreditCardPaymentService
+        implements PaymentService {
+
+    public void pay() {
+        System.out.println("Paid by credit card");
+    }
+}
+
+class OrderService {
+
+    private final PaymentService paymentService;
+
+    public OrderService(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
+    public void checkout() {
+        paymentService.pay();
+    }
+}
+\end{lstlisting}
+
+Now \texttt{OrderService} depends on the
+\texttt{PaymentService} abstraction instead of a specific payment
+implementation.
+
+\subsubsection*{Interview Answer}
+
+The Dependency Inversion Principle means that high-level classes should
+depend on abstractions rather than concrete implementations. For example,
+\texttt{OrderService} should depend on \texttt{PaymentService}, not directly
+on \texttt{CreditCardPaymentService}.
+
+\subsection{How Can Objects Be Created Without Using the \texttt{new} Keyword?}
+
+Apart from directly using the \texttt{new} keyword, Java objects can be
+created or obtained in several ways.
+
+\subsubsection*{Reflection}
+
+Reflection can invoke a constructor dynamically at runtime.
+
+\begin{lstlisting}[language=Java]
+User user = User.class.getDeclaredConstructor().newInstance();
+\end{lstlisting}
+
+The older \texttt{Class.newInstance()} method is deprecated. Modern Java
+prefers \texttt{getDeclaredConstructor().newInstance()}.
+
+\subsubsection*{Cloning}
+
+An object can be created as a copy of another object using
+\texttt{clone()}.
+
+\begin{lstlisting}[language=Java]
+User user2 = (User) user1.clone();
+\end{lstlisting}
+
+The class normally needs to implement \texttt{Cloneable}.
+
+\subsubsection*{Deserialization}
+
+A previously serialized object can be reconstructed from a stream.
+
+\begin{lstlisting}[language=Java]
+ObjectInputStream in =
+    new ObjectInputStream(
+        new FileInputStream("user.ser")
+    );
+
+User user = (User) in.readObject();
+\end{lstlisting}
+
+\subsubsection*{Factory Methods}
+
+Objects can also be obtained through factory methods:
+
+\begin{lstlisting}[language=Java]
+Integer number = Integer.valueOf(10);
+\end{lstlisting}
+
+A factory method may internally create a new object or return an existing
+one.
+
+\subsubsection*{Interview Answer}
+
+Apart from using the \texttt{new} keyword directly, objects can be created
+using reflection, cloning, and deserialization. Objects can also be obtained
+through factory methods or frameworks such as Spring.
+
+\subsection{What are the Different ClassLoaders in the JVM?}
+
+A \texttt{ClassLoader} is responsible for loading Java classes into the JVM.
+
+The main built-in class loaders are:
+
+\begin{verbatim}
+Bootstrap ClassLoader
+Platform ClassLoader
+Application ClassLoader
+\end{verbatim}
+
+\subsubsection*{Bootstrap ClassLoader}
+
+The Bootstrap ClassLoader loads core Java classes such as
+\texttt{java.lang.String} and \texttt{java.lang.Object}.
+
+It is part of the JVM itself.
+
+\subsubsection*{Platform ClassLoader}
+
+The Platform ClassLoader loads Java platform-level classes.
+
+In older Java versions, a similar role was performed by the
+\texttt{Extension ClassLoader}.
+
+\subsubsection*{Application ClassLoader}
+
+The Application ClassLoader loads application classes and dependencies
+available on the classpath.
+
+For example, classes such as:
+
+\begin{verbatim}
+OrderService
+JobApplicationController
+PaymentService
+\end{verbatim}
+
+are normally loaded by the Application ClassLoader.
+
+Class loaders usually follow the \textbf{parent delegation model}, where a
+class loader first asks its parent to load the requested class.
+
+\subsubsection*{Interview Answer}
+
+The JVM mainly uses Bootstrap, Platform, and Application ClassLoaders.
+Bootstrap loads core Java classes, Platform loads platform-level classes,
+and Application loads application classes and classpath dependencies.
+They normally follow the parent delegation model.
+
+\subsection{What is the Difference Between Heap and Stack Memory in Java?}
+
+\subsubsection*{Interview Answer}
+
+Stack memory stores method frames and local variables, while heap memory
+stores objects. Each thread has its own stack, whereas the heap is shared.
+Stack frames are removed automatically when methods return, while heap
+objects are managed by the Garbage Collector.
+
+\subsection{What is the Difference Between an Exception and an Error in Java?}
+
+Both \texttt{Exception} and \texttt{Error} inherit from
+\texttt{Throwable}.
+
+An \texttt{Exception} usually represents a problem that an application can
+anticipate and potentially handle.
+
+Examples include:
+
+\begin{verbatim}
+IOException
+SQLException
+NullPointerException
+IllegalArgumentException
+\end{verbatim}
+
+An \texttt{Error} represents a more serious JVM or system-level problem.
+
+Examples include:
+
+\begin{verbatim}
+OutOfMemoryError
+StackOverflowError
+\end{verbatim}
+
+Although an \texttt{Error} can technically be caught, applications normally
+should not try to recover from such serious failures.
+
+\subsubsection*{Interview Answer}
+
+Exceptions usually represent application-level problems that can potentially
+be handled, while Errors represent serious JVM or system-level failures that
+applications normally should not try to recover from.
+
+\subsection{What is the Purpose of the \texttt{finally} Block in Java?}
+
+The \texttt{finally} block is used for code that should execute whether an
+exception occurs or not.
+
+It is commonly used for cleanup operations such as releasing resources.
+
+The \texttt{finally} block normally executes regardless of whether the
+\texttt{try} block succeeds or throws an exception.
+
+In modern Java, \texttt{try-with-resources} is often preferred for closing
+resources automatically.
+
+\subsubsection*{Interview Answer}
+
+The \texttt{finally} block is used for code that should run whether an
+exception occurs or not, typically for cleanup and resource release.
+
+\subsection{Which Collection Maintains Insertion Order and Avoids Duplicates?}
+
+\texttt{LinkedHashSet} maintains insertion order while also preventing
+duplicate elements.
+
+\begin{lstlisting}[language=Java]
+Set<String> names = new LinkedHashSet<>();
+
+names.add("Utku");
+names.add("Ali");
+names.add("Utku");
+names.add("Mehmet");
+
+System.out.println(names);
+\end{lstlisting}
+
+The output is:
+
+\begin{verbatim}
+[Utku, Ali, Mehmet]
+\end{verbatim}
+
+The second \texttt{"Utku"} is ignored because sets do not allow duplicates,
+while the insertion order is preserved.
+
+\subsubsection*{Interview Answer}
+
+\texttt{LinkedHashSet} is used when unique elements are required while
+preserving insertion order.
+
+\subsection{How Does \texttt{ConcurrentHashMap} Handle Concurrency?}
+
+\texttt{ConcurrentHashMap} provides thread-safe access while allowing
+multiple threads to operate on the map concurrently.
+
+Unlike a fully synchronized map, it does not lock the entire map for every
+operation.
+
+In modern Java:
+
+\begin{itemize}
+    \item Read operations such as \texttt{get()} are mostly non-blocking.
+    \item Write operations use fine-grained synchronization and CAS.
+    \item Different threads can update different buckets concurrently.
+\end{itemize}
+
+For example:
+
+\begin{lstlisting}[language=Java]
+ConcurrentHashMap<String, Integer> map =
+        new ConcurrentHashMap<>();
+
+map.put("A", 1);
+map.put("B", 2);
+\end{lstlisting}
+
+Two threads may work on different parts of the map at the same time without
+locking the whole structure.
+
+\texttt{ConcurrentHashMap} does not allow \texttt{null} keys or values.
+
+\subsubsection*{Interview Answer}
+
+\texttt{ConcurrentHashMap} provides thread-safe access without locking the
+entire map. Reads are mostly non-blocking, while updates use fine-grained
+synchronization and CAS on individual buckets. This reduces contention and
+allows multiple threads to operate concurrently.
+
+\subsection{What is the Difference Between Shallow Copy and Deep Copy?}
+
+A \textbf{shallow copy} creates a new outer object, but nested object
+references are shared.
+
+\begin{lstlisting}[language=Java]
+Person p1 =
+    new Person("Utku", new Address("Ankara"));
+
+Person p2 =
+    new Person(p1.name, p1.address);
+\end{lstlisting}
+
+Both objects refer to the same \texttt{Address} object.
+
+Therefore:
+
+\begin{lstlisting}[language=Java]
+p2.address.city = "Istanbul";
+\end{lstlisting}
+
+also affects the address seen through \texttt{p1}.
+
+A \textbf{deep copy} also creates separate copies of nested mutable objects.
+
+\begin{lstlisting}[language=Java]
+Person p2 = new Person(
+    p1.name,
+    new Address(p1.address.city)
+);
+\end{lstlisting}
+
+Now the two \texttt{Person} objects have independent
+\texttt{Address} objects.
+
+\subsubsection*{Interview Answer}
+
+A shallow copy creates a new outer object but shares references to nested
+objects. A deep copy creates independent copies of both the outer object
+and its nested mutable objects.
+
+\subsection{What is a Functional Interface in Java?}
+
+A functional interface is an interface that contains exactly one abstract
+method.
+
+Its main purpose is to represent a behavior that can be implemented using a
+lambda expression.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+@FunctionalInterface
+interface Calculator {
+    int calculate(int a, int b);
+}
+\end{lstlisting}
+
+Without lambda expressions, we could create a separate implementation:
+
+\begin{lstlisting}[language=Java]
+class AddCalculator implements Calculator {
+
+    @Override
+    public int calculate(int a, int b) {
+        return a + b;
+    }
+}
+
+Calculator calculator = new AddCalculator();
+\end{lstlisting}
+
+We could also use an anonymous class:
+
+\begin{lstlisting}[language=Java]
+Calculator calculator = new Calculator() {
+
+    @Override
+    public int calculate(int a, int b) {
+        return a + b;
+    }
+};
+\end{lstlisting}
+
+Here, the interface itself is not instantiated. Java creates an anonymous
+class that implements the interface and creates an instance of that class.
+
+With a lambda expression, the same behavior can be written much more
+concisely:
+
+\begin{lstlisting}[language=Java]
+Calculator calculator = (a, b) -> a + b;
+\end{lstlisting}
+
+The lambda expression provides the implementation of the single abstract
+method in the functional interface.
+
+Functional interfaces also allow behavior to be passed as a method
+parameter:
+
+\begin{lstlisting}[language=Java]
+public void process(
+        int a,
+        int b,
+        Calculator calculator
+) {
+    System.out.println(
+        calculator.calculate(a, b)
+    );
+}
+
+process(10, 5, (a, b) -> a + b);
+process(10, 5, (a, b) -> a - b);
+process(10, 5, (a, b) -> a * b);
+\end{lstlisting}
+
+The method remains the same, but the behavior passed to it can change.
+
+Common functional interfaces in Java include:
+
+\begin{verbatim}
+Predicate<T>     -> input -> boolean
+Function<T, R>  -> input -> output
+Consumer<T>     -> input -> no return value
+Supplier<T>     -> no input -> output
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+A functional interface is an interface with exactly one abstract method.
+It allows a behavior to be represented with a lambda expression and passed
+around as a value, for example as a method parameter. Without lambdas, the
+same behavior would normally require a separate implementation class or an
+anonymous class.
+
+\subsection{How Can You Create Your Own Functional Interface in Java?}
+
+A custom functional interface is created by defining an interface with
+exactly one abstract method.
+
+\begin{lstlisting}[language=Java]
+@FunctionalInterface
+public interface Calculator {
+
+    int calculate(int a, int b);
+}
+\end{lstlisting}
+
+It can then be implemented using a lambda expression:
+
+\begin{lstlisting}[language=Java]
+Calculator add = (a, b) -> a + b;
+
+int result = add.calculate(5, 3);
+\end{lstlisting}
+
+The \texttt{@FunctionalInterface} annotation is optional, but recommended.
+It allows the compiler to verify that the interface contains only one
+abstract method.
+
+A functional interface may still contain \texttt{default} and
+\texttt{static} methods.
+
+\subsubsection*{Interview Answer}
+
+To create a custom functional interface, define an interface with exactly
+one abstract method. The \texttt{@FunctionalInterface} annotation is
+optional but recommended because it lets the compiler enforce this rule.
+
+\subsection{What is the Purpose of \texttt{Optional} in Java?}
+
+\texttt{Optional<T>} is a container that represents a value that may or may
+not be present.
+
+It is commonly used as a return type when a method may not find a result.
+
+\begin{lstlisting}[language=Java]
+Optional<User> optionalUser =
+        repository.findById(id);
+\end{lstlisting}
+
+Instead of manually checking for \texttt{null}, methods such as
+\texttt{orElse()}, \texttt{orElseGet()}, and
+\texttt{orElseThrow()} can be used.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+public User getUserById(Long id) {
+    return repository.findById(id)
+            .orElseThrow(() ->
+                new ResourceNotFoundException(
+                    "User not found"
+                )
+            );
+}
+\end{lstlisting}
+
+If the user exists, \texttt{orElseThrow()} returns the \texttt{User}.
+If the value is absent, it throws the specified exception.
+
+\subsubsection*{Interview Answer}
+
+\texttt{Optional} represents a value that may or may not be present. It is
+commonly used for return values to express absence explicitly and reduce
+manual null checks.
+
+\subsection{What is the Difference Between Intermediate and Terminal Operations in Java Streams?}
+
+Intermediate operations transform a stream and return another stream.
+
+Examples include:
+
+\begin{verbatim}
+filter()
+map()
+sorted()
+distinct()
+limit()
+\end{verbatim}
+
+Terminal operations complete the stream pipeline and produce a result or
+side effect.
+
+Examples include:
+
+\begin{verbatim}
+toList()
+forEach()
+count()
+reduce()
+collect()
+findFirst()
+\end{verbatim}
+
+For example:
+
+\begin{lstlisting}[language=Java]
+List<String> names = users.stream()
+        .filter(user -> user.getAge() >= 18)
+        .map(User::getName)
+        .toList();
+\end{lstlisting}
+
+Here, \texttt{filter()} and \texttt{map()} are intermediate operations,
+while \texttt{toList()} is a terminal operation.
+
+Intermediate operations are usually lazy and are executed when a terminal
+operation is called.
+
+\subsubsection*{Interview Answer}
+
+Intermediate operations return another stream and build the processing
+pipeline. Terminal operations finish the pipeline and produce the final
+result. Intermediate operations are generally lazy.
+
+\subsection{How Can You Access Properties from \texttt{application.properties} in Spring?}
+
+A property can be injected using the \texttt{@Value} annotation.
+
+For example:
+
+\begin{verbatim}
+app.name=Job Tracker
+\end{verbatim}
+
+\begin{lstlisting}[language=Java]
+@RestController
+public class AppController {
+
+    @Value("${app.name}")
+    private String appName;
+}
+\end{lstlisting}
+
+Spring reads \texttt{app.name} from the configuration and injects its value
+into \texttt{appName}.
+
+For multiple related properties, \texttt{@ConfigurationProperties} is
+usually preferred because it groups configuration values into a dedicated
+class.
+
+\subsubsection*{Interview Answer}
+
+Properties can be accessed using \texttt{@Value}. For multiple related
+properties, \texttt{@ConfigurationProperties} provides a cleaner and more
+maintainable approach.
+
+\subsection{What is the Purpose of Spring Profiles?}
+
+Spring Profiles allow different configurations to be used for different
+environments such as development, testing, and production.
+
+For example:
+
+\begin{verbatim}
+application-dev.properties
+application-test.properties
+application-prod.properties
+\end{verbatim}
+
+A profile can be activated using:
+
+\begin{verbatim}
+spring.profiles.active=dev
+\end{verbatim}
+
+Profiles can also control which beans are created:
+
+\begin{lstlisting}[language=Java]
+@Configuration
+@Profile("dev")
+public class DevConfig {
+}
+\end{lstlisting}
+
+This configuration is only loaded when the \texttt{dev} profile is active.
+
+\subsubsection*{Interview Answer}
+
+Spring Profiles allow environment-specific configuration. For example,
+development, testing, and production environments can use different
+database settings or beans without changing the application code.
+
+\subsection{What is the Difference Between JPA and Hibernate?}
+
+JPA is a specification that defines how Java objects should be persisted
+and mapped to relational databases.
+
+Hibernate is an implementation of the JPA specification.
+
+\begin{verbatim}
+JPA       -> specification / contract
+Hibernate -> implementation
+\end{verbatim}
+
+For example, annotations such as \texttt{@Entity}, \texttt{@Id}, and
+\texttt{@OneToMany} are defined by JPA, while Hibernate performs the actual
+ORM work and communicates with the database.
+
+Spring Data JPA provides another abstraction on top of JPA and simplifies
+repository operations.
+
+\begin{verbatim}
+Spring Data JPA
+      |
+      v
+     JPA
+      |
+      v
+ Hibernate
+      |
+      v
+ Database
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+JPA is a specification for object-relational mapping in Java, while
+Hibernate is one of its implementations. JPA defines the standard API and
+rules, and Hibernate performs the actual persistence operations.
+
+\subsection{How Do You Perform CRUD Operations Using JPA?}
+
+In standard JPA, CRUD operations can be performed using
+\texttt{EntityManager}:
+
+\begin{verbatim}
+Create -> persist()
+Read   -> find()
+Update -> merge()
+Delete -> remove()
+\end{verbatim}
+
+For example:
+
+\begin{lstlisting}[language=Java]
+entityManager.persist(user);
+
+User user =
+    entityManager.find(User.class, 1L);
+
+user.setName("Utku");
+entityManager.merge(user);
+
+entityManager.remove(user);
+\end{lstlisting}
+
+With Spring Data JPA, these operations are usually simplified through
+\texttt{JpaRepository}:
+
+\begin{lstlisting}[language=Java]
+public interface UserRepository
+        extends JpaRepository<User, Long> {
+}
+\end{lstlisting}
+
+Common methods include:
+
+\begin{verbatim}
+save()       -> Create or Update
+findById()   -> Read
+findAll()    -> Read all
+deleteById() -> Delete
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+In standard JPA, CRUD operations are performed with EntityManager using
+persist, find, merge, and remove. With Spring Data JPA, JpaRepository
+provides methods such as save, findById, findAll, and deleteById.
+
+\subsection{How Do You Implement Pagination in JPA?}
+
+With Spring Data JPA, pagination is commonly implemented using
+\texttt{Pageable} and \texttt{Page<T>}.
+
+\begin{lstlisting}[language=Java]
+Pageable pageable = PageRequest.of(0, 10);
+
+Page<User> users =
+        userRepository.findAll(pageable);
+\end{lstlisting}
+
+Here, \texttt{0} is the page number and \texttt{10} is the page size.
+
+The returned \texttt{Page} contains both the current page data and
+pagination metadata such as total pages and total elements.
+
+Sorting can also be added:
+
+\begin{lstlisting}[language=Java]
+Pageable pageable = PageRequest.of(
+        0,
+        10,
+        Sort.by("name").ascending()
+);
+\end{lstlisting}
+
+In standard JPA, pagination can also be implemented using
+\texttt{setFirstResult()} and \texttt{setMaxResults()}.
+
+\subsubsection*{Interview Answer}
+
+With Spring Data JPA, pagination is implemented using \texttt{Pageable},
+usually created with \texttt{PageRequest}, and repository methods return a
+\texttt{Page<T>} containing both the records and pagination metadata.
+
+\subsection{What Are the Different Identifier Generation Strategies in JPA?}
+
+JPA can generate primary key values using the
+\texttt{@GeneratedValue} annotation.
+
+Common strategies include:
+
+\begin{verbatim}
+IDENTITY
+SEQUENCE
+TABLE
+AUTO
+UUID
+\end{verbatim}
+
+For example:
+
+\begin{lstlisting}[language=Java]
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+\end{lstlisting}
+
+\texttt{IDENTITY} uses the database's identity or auto-increment mechanism.
+
+\texttt{SEQUENCE} uses a database sequence.
+
+\texttt{TABLE} uses a separate table to generate identifiers.
+
+\texttt{AUTO} allows the JPA provider to choose an appropriate strategy.
+
+Modern JPA versions also support \texttt{UUID} generation.
+
+\subsubsection*{Interview Answer}
+
+JPA supports identifier generation strategies such as
+\texttt{IDENTITY}, \texttt{SEQUENCE}, \texttt{TABLE},
+\texttt{AUTO}, and \texttt{UUID}. The appropriate strategy depends on
+the database and application requirements.
+
+\subsection{What Fetch Strategies Are Available in JPA?}
+
+JPA provides two main fetch strategies: \texttt{LAZY} and
+\texttt{EAGER}.
+
+Suppose a \texttt{User} has many orders:
+
+\begin{lstlisting}[language=Java]
+@OneToMany(fetch = FetchType.LAZY)
+private List<Order> orders;
+\end{lstlisting}
+
+With \texttt{LAZY} loading, retrieving the user does not immediately load
+the orders.
+
+\begin{lstlisting}[language=Java]
+User user = userRepository.findById(1L)
+        .orElseThrow();
+
+user.getName();   // Orders are not needed yet
+user.getOrders(); // Orders may now be loaded
+\end{lstlisting}
+
+With \texttt{EAGER} loading:
+
+\begin{lstlisting}[language=Java]
+@OneToMany(fetch = FetchType.EAGER)
+private List<Order> orders;
+\end{lstlisting}
+
+the related orders are loaded as part of loading the user, even if they are
+not immediately used.
+
+Default fetch types are:
+
+\begin{verbatim}
+@OneToMany  -> LAZY
+@ManyToMany -> LAZY
+@ManyToOne  -> EAGER
+@OneToOne   -> EAGER
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+LAZY loading delays loading related entities until they are needed, while
+EAGER loading fetches them together with the main entity. LAZY loading can
+avoid retrieving unnecessary data and is often preferred for large
+relationships.
+
+\subsection{What Caching Mechanisms Are Supported by JPA?}
+
+JPA mainly provides two levels of caching.
+
+\subsubsection*{First-Level Cache}
+
+The first-level cache belongs to the persistence context and is associated
+with an \texttt{EntityManager}.
+
+It is automatic.
+
+\begin{lstlisting}[language=Java]
+User u1 = entityManager.find(User.class, 1L);
+User u2 = entityManager.find(User.class, 1L);
+\end{lstlisting}
+
+Within the same persistence context, the second lookup can reuse the
+already managed entity instead of querying the database again.
+
+\subsubsection*{Second-Level Cache}
+
+The second-level cache can be shared between multiple persistence contexts.
+
+It is optional and depends on the JPA provider and its configuration.
+
+\begin{verbatim}
+First-Level Cache
+-> EntityManager / Persistence Context scoped
+-> Automatic
+
+Second-Level Cache
+-> Shared across persistence contexts
+-> Optional and provider-dependent
+\end{verbatim}
+
+Query caching is not a standard JPA cache mechanism and may be provided by
+implementations such as Hibernate.
+
+\subsubsection*{Interview Answer}
+
+JPA has a first-level cache associated with the persistence context, which
+is automatic. It can also use an optional second-level cache shared across
+multiple persistence contexts, depending on the JPA provider and
+configuration.
+
+\subsection{What is a Composite Key in SQL?}
+
+A composite key is a key made of two or more columns that together uniquely
+identify a row.
+
+For example:
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE student_course (
+    student_id BIGINT,
+    course_id BIGINT,
+    grade VARCHAR(2),
+
+    PRIMARY KEY (student_id, course_id)
+);
+\end{lstlisting}
+
+Neither \texttt{student\_id} nor \texttt{course\_id} must be unique by
+itself, but their combination must be unique.
+
+Composite keys are commonly used in junction tables that represent
+many-to-many relationships.
+
+\subsubsection*{Interview Answer}
+
+A composite key is a key composed of multiple columns that together uniquely
+identify a row. It is commonly used in junction tables, such as a
+student-course relationship.
+
+\subsection{When Do We Use an OUTER JOIN in SQL?}
+
+An \texttt{OUTER JOIN} is used when unmatched rows should also be included
+in the result.
+
+For example:
+
+\begin{lstlisting}[language=SQL]
+SELECT u.name, o.id
+FROM users u
+LEFT JOIN orders o
+    ON u.id = o.user_id;
+\end{lstlisting}
+
+A \texttt{LEFT JOIN} returns all rows from the left table and matching rows
+from the right table.
+
+If no matching row exists, the columns from the right table contain
+\texttt{NULL}.
+
+\begin{verbatim}
+INNER JOIN -> only matching rows
+LEFT JOIN  -> all rows from the left table
+RIGHT JOIN -> all rows from the right table
+FULL JOIN  -> all rows from both tables
+\end{verbatim}
+
+\subsubsection*{Interview Answer}
+
+OUTER JOINs are used when we want to include unmatched rows in the result.
+For example, a LEFT JOIN can return all users even if some users have no
+orders.
+
+\subsection{What is a Database View and When Do We Use It?}
+
+A database \texttt{VIEW} is a virtual table based on a SQL query.
+
+Views are commonly used to simplify complex queries, reuse query logic,
+restrict access to specific columns or rows, and provide abstraction over
+underlying tables.
+
+A normal view generally stores the query definition rather than storing the
+query result itself.
+
+\subsubsection*{Interview Answer}
+
+A database view is a virtual table based on a SQL query. It is useful for
+simplifying complex queries, reusing query logic, restricting access to
+specific data, and hiding underlying table complexity.
+
+\subsection{What is the Difference Between a Process and a Thread?}
+
+A process is an independent running program with its own memory space.
+
+A thread is a unit of execution inside a process.
+
+Multiple threads in the same process share resources such as heap memory,
+while each thread has its own stack.
+
+\begin{verbatim}
+Process
+|
++-- Shared Heap
+|
++-- Thread 1 -> own stack
++-- Thread 2 -> own stack
++-- Thread 3 -> own stack
+\end{verbatim}
+
+Processes are more isolated and generally more expensive to create, while
+threads are lighter and can communicate through shared memory.
+
+However, shared memory can introduce concurrency problems such as race
+conditions.
+
+\subsubsection*{Interview Answer}
+
+A process is an independent running program with its own memory space,
+while a thread is a unit of execution inside a process. Threads in the same
+process share resources such as heap memory, but each thread has its own
+stack.
+
+\subsection{What is Multithreading?}
+
+Multithreading means executing multiple threads within the same process.
+
+Threads share process resources such as heap memory, while each thread has
+its own stack.
+
+
+
+Calling \texttt{start()} creates a new thread of execution, while calling
+\texttt{run()} directly is only a normal method call.
+
+Multithreading can improve responsiveness and concurrency, but shared state
+must be handled carefully to avoid problems such as race conditions.
+
+\subsubsection*{Interview Answer}
+
+Multithreading is the execution of multiple threads within the same process.
+Threads share process resources but have separate stacks. It improves
+concurrency, but shared mutable state can introduce thread-safety problems.
+
+\subsection{What is Multiprocessing?}
+
+Multiprocessing means running multiple independent processes at the same
+time.
+
+Each process has its own memory space and resources.
+
+\begin{verbatim}
+Process 1
+-> Separate memory
+
+Process 2
+-> Separate memory
+\end{verbatim}
+
+This is different from multithreading, where multiple threads run inside
+the same process and share memory.
+
+Multiprocessing provides better isolation and can make effective use of
+multiple CPU cores.
+
+However, communication between processes is generally more expensive and
+usually requires mechanisms such as pipes, sockets, shared memory, or
+message queues.
+
+\subsubsection*{Interview Answer}
+
+Multiprocessing means running multiple independent processes, each with its
+own memory space. It provides strong isolation and can use multiple CPU
+cores effectively, but inter-process communication is more expensive than
+communication between threads.
+
+\subsection{What is the Difference Between Multithreading and Multiprocessing?}
+
+Multithreading uses multiple threads inside the same process, while
+multiprocessing uses multiple independent processes.
+
+\begin{verbatim}
+Multithreading
+-> One process
+-> Multiple threads
+-> Shared memory
+-> Lower overhead
+
+Multiprocessing
+-> Multiple processes
+-> Separate memory
+-> Better isolation
+-> Higher overhead
+\end{verbatim}
+
+Threads can communicate easily through shared memory, but this may create
+race conditions and synchronization problems.
+
+Processes are more isolated, but communication between them usually
+requires inter-process communication mechanisms.
+
+\subsubsection*{Interview Answer}
+
+Multithreading uses multiple threads inside the same process, so they share
+memory and are lightweight. Multiprocessing uses separate processes with
+independent memory spaces, providing better isolation but higher overhead.
+
+\subsection{What is a Race Condition?}
+
+A race condition occurs when multiple threads access and modify shared
+mutable data concurrently, causing the result to depend on the timing of
+the threads.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+class Counter {
+
+    private int count = 0;
+
+    public void increment() {
+        count++;
+    }
+}
+\end{lstlisting}
+
+If multiple threads call \texttt{increment()} at the same time, some
+updates may be lost because \texttt{count++} is not an atomic operation.
+
+Race conditions can be prevented using synchronization, locks, or atomic
+classes such as \texttt{AtomicInteger}.
+
+\subsubsection*{Interview Answer}
+
+A race condition occurs when multiple threads modify shared data
+concurrently and the result depends on the order or timing of execution.
+Proper synchronization or atomic operations can be used to prevent it.
+
+\subsection{What is Synchronization and Why is it Needed?}
+
+Synchronization controls access to shared mutable data when multiple
+threads are running concurrently.
+
+For example:
+
+\begin{lstlisting}[language=Java]
+class Counter {
+
+    private int count = 0;
+
+    public synchronized void increment() {
+        count++;
+    }
+}
+\end{lstlisting}
+
+The \texttt{synchronized} keyword ensures that only one thread at a time
+can execute the protected section for the same object.
+
+Synchronization helps prevent race conditions and inconsistent data.
+
+However, excessive synchronization can reduce performance because threads
+may need to wait for locks.
+
+\subsubsection*{Interview Answer}
+
+Synchronization controls concurrent access to shared mutable data. It
+protects critical sections so that only one thread at a time can execute
+them, helping prevent race conditions.
+
+\subsection{What is a Deadlock?}
+
+A deadlock occurs when two or more threads wait indefinitely for resources
+held by each other, so none of them can continue execution.
+
+For example:
+
+\begin{verbatim}
+Thread 1:
+holds Lock A
+waits for Lock B
+
+Thread 2:
+holds Lock B
+waits for Lock A
+\end{verbatim}
+
+This creates a circular dependency.
+
+One common way to reduce deadlock risk is to acquire locks in a consistent
+order.
+
+\subsubsection*{Interview Answer}
+
+A deadlock occurs when threads wait indefinitely for locks held by each
+other, preventing all of them from making progress.
+
+\subsection{What Does Thread-Safe Mean?}
+
+Thread-safe code behaves correctly when it is accessed by multiple threads
+concurrently.
+
+For example, this is not thread-safe:
+
+\begin{lstlisting}[language=Java]
+class Counter {
+    private int count = 0;
+
+    public void increment() {
+        count++;
+    }
+}
+\end{lstlisting}
+
+It can be made thread-safe using synchronization:
+
+\begin{lstlisting}[language=Java]
+public synchronized void increment() {
+    count++;
+}
+\end{lstlisting}
+
+Other approaches include atomic classes, locks, and immutable objects.
+
+\subsubsection*{Interview Answer}
+
+Thread-safe code works correctly when multiple threads access it
+concurrently. Shared mutable state must be protected from race conditions
+and inconsistent updates.
 \end{document}
